@@ -30,7 +30,7 @@ class ResultsBotView(View):
 		return View.dispatch(self, request, *args, **kwargs)
 	
 	def send_semesters_qr(self, uid, student, token, *args, **kwargs):
-		semesters = student.semesters.all().order_by('number')
+		semesters = student.batch.semesters.all().order_by('number')
 		if not semesters:
 			payload = {'recipient':{'id':uid}, 'message':{'text':'Sorry, I don\'t have any data for you'}}
 			send_message(payload)
@@ -130,7 +130,7 @@ class ResultsBotView(View):
 		enrollment, sem = token.split('_')
 		sem = int(sem)
 		student = Student.objects.get(enrollment=enrollment)
-		semester = student.semesters.get(number=sem)
+		semester = student.batch.semesters.get(number=sem)
 		subjects = semester.subjects.all()
 		subject_pks = [str(subject.pk) for subject in subjects]
 		reply = []
@@ -161,7 +161,7 @@ class ResultsBotView(View):
 			weighted_marks = 0 # sum of Marks * Credit
 			normal_marks = 0 # sum of Marks * 1
 			total_subjects = 0
-			semesters = student.semesters.order_by('number')
+			semesters = student.batch.semesters.order_by('number')
 			for semester in semesters:
 				sems_list.append(semester)
 				subjects = semester.subjects.all()
