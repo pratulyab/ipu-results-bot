@@ -121,3 +121,13 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.10/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# FB Authorization
+VERIFY_TOKEN = "123"
+PAGE_ACCESS_TOKEN = "EAAHBHk2KuYIBAL59dCaAYxRGZAmOBNsveOcIG6rl1zWtINWvZBSWQV2d8MeqGp7ZChw0HtI4l0YACc29JLmeXu5pB0gnsVcbSTMIqKY0PmnI1BZAdTpkjexBRO8qVQAsnBD1TmokvqTaxx3gbVqwBwGF5eNaeyvxHZBZBbtp0XzgZDZD"
+
+# ERROR CODES
+SEND_ERROR_CODES = [
+	'190', # Invalid OAuth Token
+	'613', # Calls to API have exceeded
+]
