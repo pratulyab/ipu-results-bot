@@ -1,0 +1,9 @@
+chardet==2.3.0
+Django==1.10
+gunicorn==19.6.0
+numpy==1.11.2
+pdfminer.six==20160614
+pdftables.six==0.0.5
+PyPDF2==1.26.0
+requests==2.12.3
+six==1.10.0
