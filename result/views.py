@@ -93,9 +93,9 @@ class PDFReader:
 		semester = Semester.objects.get_or_create(number=sem, batch=batch)[0]
 	
 	# Regex PHEW! __--__
-		student_wise_pattern = r'(\d{11}[a-zA-Z\s]+(?P<sub>\d{5}\(\d\)(\s*(\d{1,3}\*?|A|\-)){3}\s*)+)'
+		student_wise_pattern = r'(\d{11}[a-zA-Z\s]+(?P<sub>\d{5,6}\(\d\)(\s*(\d{1,3}\*?|A|\-)){3}\s*)+)'
 		student_pattern = r'(\d{11})([a-zA-Z\s]+)'
-		details_pattern = r'(\d{5})\s*\((\d)\)\s*(\d{1,3}\*?|A|\-)\s*(\d{1,3}\*?|A|\-)\s*(\d{1,3}\*?|A|\-)'
+		details_pattern = r'(\d{5,6})\s*\((\d)\)\s*(\d{1,3}\*?|A|\-)\s*(\d{1,3}\*?|A|\-)\s*(\d{1,3}\*?|A|\-)'
 		
 		student_wise_details = re.findall(student_wise_pattern, text)
 		sem_credits = 0

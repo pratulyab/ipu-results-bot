@@ -11,7 +11,7 @@ class Subject(models.Model):
 			('T', 'Theory'),
 			('P', 'Practical'),
 		)
-	paper_code = models.CharField(max_length=5, unique=True)
+	paper_code = models.CharField(max_length=6, unique=True)
 	name = models.CharField(max_length=128, blank=True)
 	credits = models.PositiveSmallIntegerField()
 	type = models.CharField(max_length=1, choices=SUB_TYPE, default='T')
@@ -109,7 +109,7 @@ def validate_semester_subjects(sender, **kwargs):
 			# Validating subject corresponding to year is chosen
 			# 99101 is in first year
 			# If there were a sub with code 99201, it would have been in 2nd year
-			sub_year = int(subject.paper_code[2])
+			sub_year = int(subject.paper_code[-3])
 			sem_year = int((number+1)/2 if number%2 else number/2)
 			if sub_year != sem_year:
 				raise ValidationError(_('Subject %s is not intended for %s Sem, %s Year' % (subject.__str__(), number, sem_year)))
