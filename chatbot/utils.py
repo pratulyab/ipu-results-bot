@@ -34,6 +34,9 @@ def send_message(payload):
 		code = r['error']['code']
 		if code in settings.SEND_ERROR_CODES:
 			# Mail admins
+			print ('-+' * 20)
+			print(r)
+			print ('-+' * 20)
 			pass
 		else:
 			print("Error Occurred: %s" % (code, ))
