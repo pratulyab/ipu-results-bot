@@ -193,7 +193,7 @@ class ResultsBotView(View):
 			credits_percentage = (weighted_marks/(total_credits * 100)) * 100
 			normal_percentage = (normal_marks/(total_subjects * 100)) * 100
 		sems = [str(s.number) for s in sems_list]
-		sems_subtitle = "Sem: " + ("%s - %s" % (min(sems), max(sems)) if sems == 'ALL' else ','.join(sems))
+		sems_subtitle = "Sem: " + ("%s - %s" % (min(sems), max(sems)) if sem == 'ALL' and min(sems) != max(sems) else ','.join(sems))
 
 		payload = {
 			"recipient" : {"id" : uid},
