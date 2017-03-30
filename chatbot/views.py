@@ -149,8 +149,6 @@ class ResultsBotView(View):
 		self.send_percentage_buttons(uid, student, semester, subject_pks)
 
 	def handle_percentage_postback(self, uid, token):
-		print('*'*20)
-		print(token)
 		student_pk, token = token.split('_')
 		sem, subjects = token.split('<')
 		sems_list = []
@@ -205,7 +203,7 @@ class ResultsBotView(View):
 						"top_element_style": "compact",
 						"elements": [
 						{
-							"title": "Percentages for %s" % enrollment,
+							"title": "Percentages for %s" % student.enrollment,
 							"subtitle": "1) w/ Credits\n2) w/o Credits",
 						},
 						{
