@@ -246,6 +246,9 @@ class ResultsBotView(View):
 				if 'postback' in message:
 				# Percentage
 					self.handle_percentage_postback(uid, message['postback']['payload'])
+				elif 'attachments' in message:
+					payload = {'recipient':{'id':uid}, 'message':{'text':self.standard_reply}}
+					send_message(payload)
 				elif 'quick_reply' in message.get('message', ''):
 				# Sem Result
 					self.send_format(uid)
