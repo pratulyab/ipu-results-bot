@@ -16,7 +16,7 @@ import json, re, requests
 # Create your views here.
 
 class ResultsBotView(View):
-	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease type \'help\' to see how I can serve you.'
+	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease send \'help\' to see how can I serve you.'
 	enrollment_pattern = r'(\d{3})(\d{3})(\d{3})(\d{2})'
 	
 	def get(self, request, *args, **kwargs):
@@ -105,17 +105,17 @@ class ResultsBotView(View):
 					"type": "template",
 					"payload": {
 						"template_type": "button",
-						"text": "Find out the percentages for the enrollment number %s\n(w/ credits and w/o credits)" % (student.enrollment,),
+						"text": "Find out the percentages for the enrollment number %s\n" % (student.enrollment,),
 						"buttons": [
 							{
 								"type": "postback",
-								"title": "%d Semester" % (semester.number),
-								"payload": "%s_%d<%s" % (student.enrollment, semester.number, (','.join(sem_subject_pks)))
+								"title": "Only %d Semester" % (semester.number),
+								"payload": "%d_%d<%s" % (student.pk, semester.number, (','.join(sem_subject_pks)))
 							},
 							{
 								"type": "postback",
-								"title": "Upto Most Recent Sem",
-								"payload": "%s_ALL<" % (student.enrollment)
+								"title": "Aggregate",
+								"payload": "%d_ALL<" % (student.pk)
 							}
 						]
 					}
@@ -150,10 +150,10 @@ class ResultsBotView(View):
 
 	def handle_percentage_postback(self, uid, token):
 		print(token)
-		enrollment, token = token.split('_')
+		student_pk, token = token.split('_')
 		sem, subjects = token.split('<')
 		sems_list = []
-		student = Student.objects.get(enrollment=enrollment)
+		student = Student.objects.get(pk=student_pk)
 		credits_percentage = 0 # ALL(Credit*Marks)/(total credits * 100)
 		normal_percentage = 0 # (Sum of marks)/(total subjects * 100)
 		if sem == 'ALL':
@@ -242,6 +242,7 @@ class ResultsBotView(View):
 				uid = message['sender']['id']
 				send_action(uid, "typing_on")
 				if 'postback' in message:
+					print(message['postback']['payload'])
 				# Percentage
 					self.handle_percentage_postback(uid, message['postback']['payload'])
 				elif 'quick_reply' in message.get('message', ''):

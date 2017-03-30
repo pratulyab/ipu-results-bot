@@ -11,26 +11,27 @@ check = {'batches': ['2014'], 'colleges': ['164']}
 
 def parse(url):
 	print('Parsing ', url)
+	f = tempfile.NamedTemporaryFile(delete=False)
 	try:
 		r = requests.get(url)
-		f = tempfile.NamedTemporaryFile(delete=False)
 		f.write(r.content)
 		pdf(f.name, check=check)
 		f.close()
 	finally:
 		os.remove(f.name)
 
-if len(sys.argv) == 2:
-	try:
-		f = open(sys.argv[1], 'r')
-	except:
-		print('Please provide valid file name as argument')
-		exit(0)
-	link = f.readline()
-	while link:
-		parse(link.replace('\n', ''))
+if __name__ == '__main__':
+	if len(sys.argv) == 2:
+		try:
+			f = open(sys.argv[1], 'r')
+		except:
+			print('Please provide valid file name as argument')
+			exit(0)
 		link = f.readline()
-else:
-	while(1):
-		url = input('Enter URL to IPU Result PDF doc: ')
-		parse(url)
+		while link:
+			parse(link.replace('\n', ''))
+			link = f.readline()
+	else:
+		while(1):
+			url = input('Enter URL to IPU Result PDF doc: ')
+			parse(url)
