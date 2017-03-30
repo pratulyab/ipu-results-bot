@@ -122,8 +122,6 @@ class ResultsBotView(View):
 				}
 			}
 		}
-		from pprint import pprint
-		pprint(payload)
 		send_message(payload)
 
 	def handle_quickreply(self, uid, token):
@@ -242,6 +240,7 @@ class ResultsBotView(View):
 		print('*'*20)
 		for entry in response['entry']:
 			for message in entry['messaging']:
+				print(message)
 				uid = message['sender']['id']
 				send_action(uid, "typing_on")
 				if 'postback' in message:
