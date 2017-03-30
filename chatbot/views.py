@@ -209,7 +209,7 @@ class ResultsBotView(View):
 							"subtitle": sems_subtitle
 						},
 						{
-							"title": "%.2f%" % credits_percentage,
+							"title": "%.2f" % credits_percentage + '%',
 							"subtitle": "credits based",
 							"buttons": [
 							{
@@ -217,7 +217,7 @@ class ResultsBotView(View):
 							}]
 						},
 						{
-							"title": "%.2f%" % normal_percentage,
+							"title": "%.2f" % normal_percentage + '%',
 							"subtitle": "w/o credits",
 							"buttons": [
 							{
@@ -232,8 +232,6 @@ class ResultsBotView(View):
 				}
 			}
 		}
-		from pprint import pprint
-		pprint(payload)
 		send_message(payload)
 	
 	def post(self, request, *args, **kwargs):
