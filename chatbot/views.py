@@ -181,7 +181,7 @@ class ResultsBotView(View):
 			normal_marks = 0 # sum of Marks * 1
 			total_subjects = 0
 			subjects = Subject.objects.filter(pk__in = subjects)
-			sems_list.append(Semester.objects.get(subjects__pk__in=[subjects[0].pk], students__pk__in=[student.pk]))
+			sems_list.append(Semester.objects.get(subjects__pk__in=[subjects[0].pk], batch__students__pk__in=[student.pk]))
 			for subject in subjects:
 				score = student.scores.get(subject=subject)
 				credits = subject.credits
@@ -193,6 +193,8 @@ class ResultsBotView(View):
 			credits_percentage = (weighted_marks/(total_credits * 100)) * 100
 			normal_percentage = (normal_marks/(total_subjects * 100)) * 100
 		sems = [str(s.number) for s in sems_list]
+		sems_subtitle = "Sem: " + ("%s - %s" % (min(sems), max(sems)) if sems == 'ALL' else ','.join(sems))
+
 		payload = {
 			"recipient" : {"id" : uid},
 			"message": {
@@ -203,20 +205,20 @@ class ResultsBotView(View):
 						"top_element_style": "compact",
 						"elements": [
 						{
-							"title": "Percentages for %s" % student.enrollment,
-							"subtitle": "1) w/ Credits\n2) w/o Credits",
+							"title": student.enrollment,
+							"subtitle": sems_subtitle
 						},
 						{
-							"title": "%.2f" % credits_percentage,
-							"subtitle": "Semesters: %s" % ', '.join(sems),
+							"title": "%.2f%" % credits_percentage,
+							"subtitle": "credits based",
 							"buttons": [
 							{
 								"type": "element_share"
 							}]
 						},
 						{
-							"title": "%.2f" % normal_percentage,
-							"subtitle": "Semesters: %s" % ', '.join(sems),
+							"title": "%.2f%" % normal_percentage,
+							"subtitle": "w/o credits",
 							"buttons": [
 							{
 								"type": "element_share"
