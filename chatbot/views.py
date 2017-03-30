@@ -122,7 +122,8 @@ class ResultsBotView(View):
 				}
 			}
 		}
-		print(payload)
+		from pprint import pprint
+		pprint(payload)
 		send_message(payload)
 
 	def handle_quickreply(self, uid, token):
@@ -238,14 +239,12 @@ class ResultsBotView(View):
 	
 	def post(self, request, *args, **kwargs):
 		response = json.loads(request.body.decode('utf-8'))
+		print('*'*20)
 		for entry in response['entry']:
-			print(entry)
 			for message in entry['messaging']:
-				print(message)
 				uid = message['sender']['id']
 				send_action(uid, "typing_on")
 				if 'postback' in message:
-					print(message['postback']['payload'])
 				# Percentage
 					self.handle_percentage_postback(uid, message['postback']['payload'])
 				elif 'quick_reply' in message.get('message', ''):
@@ -258,5 +257,4 @@ class ResultsBotView(View):
 				else:
 					text = message['message']['text']
 					self.handle_text(uid, text)
-		print('----------------------------------------')
 		return HttpResponse()
