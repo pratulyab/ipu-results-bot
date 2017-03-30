@@ -109,7 +109,7 @@ class ResultsBotView(View):
 						"buttons": [
 							{
 								"type": "postback",
-								"title": "Only %d Semester" % (semester.number),
+								"title": "For %d Semester" % (semester.number),
 								"payload": "%d_%d<%s" % (student.pk, semester.number, (','.join(sem_subject_pks)))
 							},
 							{
@@ -122,6 +122,7 @@ class ResultsBotView(View):
 				}
 			}
 		}
+		print(payload)
 		send_message(payload)
 
 	def handle_quickreply(self, uid, token):
@@ -238,7 +239,9 @@ class ResultsBotView(View):
 	def post(self, request, *args, **kwargs):
 		response = json.loads(request.body.decode('utf-8'))
 		for entry in response['entry']:
+			print(entry)
 			for message in entry['messaging']:
+				print(message)
 				uid = message['sender']['id']
 				send_action(uid, "typing_on")
 				if 'postback' in message:
@@ -255,4 +258,5 @@ class ResultsBotView(View):
 				else:
 					text = message['message']['text']
 					self.handle_text(uid, text)
+		print('----------------------------------------')
 		return HttpResponse()
