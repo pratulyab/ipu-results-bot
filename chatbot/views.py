@@ -149,6 +149,7 @@ class ResultsBotView(View):
 		self.send_percentage_buttons(uid, student, semester, subject_pks)
 
 	def handle_percentage_postback(self, uid, token):
+		print('*'*20)
 		print(token)
 		student_pk, token = token.split('_')
 		sem, subjects = token.split('<')
@@ -237,10 +238,8 @@ class ResultsBotView(View):
 	
 	def post(self, request, *args, **kwargs):
 		response = json.loads(request.body.decode('utf-8'))
-		print('*'*20)
 		for entry in response['entry']:
 			for message in entry['messaging']:
-				print(message)
 				uid = message['sender']['id']
 				send_action(uid, "typing_on")
 				if 'postback' in message:
