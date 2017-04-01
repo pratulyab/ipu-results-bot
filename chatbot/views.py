@@ -162,7 +162,7 @@ class ResultsBotView(View):
 		total_credits = sum(each['total_credits'] for each in values)
 		total_subjects = sum(each['total_subjects'] for each in values)
 		credits_percentage = weighted_total / total_credits
-		normal_percentage = normak_total / total_subjects
+		normal_percentage = normal_total / total_subjects
 
 		payload = {
 			"recipient" : {"id" : uid},
