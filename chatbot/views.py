@@ -116,7 +116,7 @@ class ResultsBotView(View):
 							{
 								"type": "postback",
 								"title": "Aggregate",
-								"payload": "%d_%s" % (student.pk, ','.join([s['pk'] for s in student.sem_results.values('pk')]))
+								"payload": "%d_%s" % (student.pk, ','.join(str([s['pk']) for s in student.sem_results.values('pk')]))
 							}
 						]
 					}
@@ -137,12 +137,12 @@ class ResultsBotView(View):
 		for subject in subjects:
 			score = student.scores.get(subject=subject, student=student)
 			name = subject.name or subject.paper_id
-			code = subject.paper_id
+			paper_id = subject.paper_id
 			credits = subject.credits
 			internal = score.internal_marks
 			external = score.external_marks
 			total = score.total_marks
-			reply.append("%s - %s (%d)\n%d + %d = %d\n\n" % (name, code, credits, internal, external, total))
+			reply.append("%s - %s (%d)\n%d + %d = %d\n\n" % (name, paper_id, credits, internal, external, total))
 		for msg in reply:
 			payload = {'recipient':{'id':uid}, 'message':{'text':msg}}
 			send_message(payload)
