@@ -1,7 +1,8 @@
+from django.core.exceptions import ValidationError
 from django.shortcuts import render
 
 from college.models import Batch, College, Semester, Stream, Subject
-from student.models import Student
+from student.models import Student, SemWiseResult
 from result.models import Score
 
 import PyPDF2 as pdf
@@ -36,17 +37,17 @@ class PDFReader:
 			check[key] = value
 		self.start_reading(check)
 		# 'check' dictionary is used to allow specific colleges', streams' or batches' data to be scraped from the pdf
-
-#		except FileNotFoundError:
-#			print('No such file found.')
-#			exit()
-#		except Exception as e:
-#			print(e)
-#			exit()
-#		finally:
-#			print('Closing file...')
-#			self.f.close()
-
+		'''
+		except FileNotFoundError:
+			print('No such file found.')
+			exit()
+		except Exception as e:
+			print(e)
+			exit()
+		finally:
+			print('Closing file...')
+			self.f.close()
+		'''
 	def __del__(self):
 		self.f.close()
 
@@ -63,11 +64,12 @@ class PDFReader:
 		for i,row in enumerate(rows):
 			if i == 0:
 				continue
-			subject_code = row[1].strip()
+			subject_id = row[1].strip()
+			subject_code = row[2].strip()
 			subject_name = row[3].title().strip()
 			subject_type = row[5].strip()[0]
 			credits = int(row[4].strip())
-			subjects.append(Subject.objects.get_or_create(paper_code=subject_code, defaults={'name':subject_name, 'credits':credits, 'type':subject_type})[0])
+			subjects.append(Subject.objects.get_or_create(paper_id=subject_id, defaults={'code':subject_code, 'name':subject_name, 'credits':credits, 'type':subject_type})[0])
 		subjects = [sub.pk for sub in subjects]
 		return (Subject.objects.filter(pk__in=subjects)) # QuerySet
 	
@@ -85,6 +87,8 @@ class PDFReader:
 #		batch_str = stream + college + year[2:]
 		text = re.sub(r'SID: \d{12}SchemeID: \d{12}', '', text)
 		text = re.split(r'RTSID: \d{22}', text)[1]
+
+
 	# Extracting objects
 		stream = Stream.objects.get_or_create(code=stream, defaults={'max_semesters': 12})[0] # Rectify max later on
 		college= College.objects.get_or_create(code=college)[0]
@@ -92,18 +96,26 @@ class PDFReader:
 		batch = Batch.objects.get_or_create(college=college, stream=stream, year=year)[0]
 		semester = Semester.objects.get_or_create(number=sem, batch=batch)[0]
 	
-	# Regex PHEW! __--__
-		student_wise_pattern = r'(\d{11}[a-zA-Z\s]+(?P<sub>\d{5,6}\(\d\)(\s*(\d{1,3}\*?|A|\-)){3}\s*)+)'
+	# Regex
+		student_wise_pattern = r'(\d{11}[a-zA-Z\s]+(?P<sub>\d{5,6}\(\d\)(\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)){3}\s*)+)'
 		student_pattern = r'(\d{11})([a-zA-Z\s]+)'
-		details_pattern = r'(\d{5,6})\s*\((\d)\)\s*(\d{1,3}\*?|A|\-)\s*(\d{1,3}\*?|A|\-)\s*(\d{1,3}\*?|A|\-)'
+		details_pattern = r'(\d{5,6})\s*\((\d)\)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)'
 		
 		student_wise_details = re.findall(student_wise_pattern, text)
 		sem_credits = 0
+		
 	# Creating entries for students and their results
 		for i,each in enumerate(student_wise_details):
 			each = each[0].strip()
 			enrollment, name = re.findall(student_pattern, each)[0]
+			
+			obtained_credits = 0
+			normal_total = 0
+			weighted_total = 0
+			total_subjects = 0
+			
 		# Handling rare discrepancies in PDF
+		# Eg. Incorrect entry under different coll or stream or batch
 			coll, strm, yr = re.match(r'\d{3}(\d{3})(\d{3})(\d{2})', enrollment).groups()
 			new_year = '20' + yr
 			if coll != college.code:
@@ -121,49 +133,67 @@ class PDFReader:
 				semester = Semester.objects.get_or_create(number=sem, batch=batch)[0]
 			name = name.title().split()
 			student = Student.objects.get_or_create(enrollment=enrollment, defaults={'first_name':name[0], 'last_name':' '.join(name[1:]), 'batch':batch})[0]
-			'''
-			try:
-				semester.students.add(student) # Add student to semester
-			except Exception as e:
-				print(e)
-				print(semester)
-				print(student)
-				continue
-			'''
 			details = re.findall(details_pattern, each)
 			for every in details:
-				paper_code, credits, internal, external, total = every
+				paper_id, credits, internal, external, total = every
 				grace = False
 				if '*' in total:
 					total = total.replace('*', '')
 					grace = True
 				credits = int(credits)
-				internal = 0 if not internal.isnumeric() else int(internal)
+				internal = 0 if not internal.isnumeric() else int(internal) # Because of A, M marked (Absent, Medical)
 				external = 0 if not external.isnumeric() else int(external)
 				total = 0 if not total.isnumeric() else int(total)
-				verdict = 'F' if total < 50 else 'P'
-				back = True if verdict == 'F' else False
+				passed =  total >= 50
+				back = not passed
 				if i == 0:
 					sem_credits += credits
 			# Creating subjects
 				try:
-					subject = self.subjects.get(paper_code=paper_code)
+					subject = self.subjects.get(paper_id=paper_id)
 				except Subject.DoesNotExist:
 					# Create new subject and add it to self.subjects for subsequent queries
-					subject = Subject.objects.create(paper_code=paper_code, credits=credits)
+					subject, created = Subject.objects.get_or_create(paper_id=paper_id, defaults={'credits':credits})
 					subject_pks = [s.pk for s in self.subjects.all()] + [subject.pk]
 					subject_pks = set(subject_pks)
 					self.subjects = Subject.objects.filter(pk__in = subject_pks)
-				semester.subjects.add(subject)
-				score, created = Score.objects.get_or_create(student=student, subject=subject, defaults={'total_marks':total, 'internal_marks':internal, 'external_marks':external, 'verdict':verdict, 'back':back})
+				try:
+					semester.subjects.add(subject)
+				except ValidationError as e:
+					if e.code == 'anamoly':
+						print('ANAMOLY: %s' % (subject))
+						anamoly_subject = subject
+						self.subjects = self.subjects.exclude(pk=anamoly_subject.pk)
+						subject = Subject.objects.filter(code=anamoly_subject.code).exclude(pk=anamoly_subject.pk)
+						print(anamoly_subject.semesters.all())
+						if not anamoly_subject.semesters.count():
+							print('Deleting it')
+							anamoly_subject.delete()
+				score, created = Score.objects.get_or_create(student=student, subject=subject, defaults={'total_marks':total, 'internal_marks':internal, 'external_marks':external, 'passed':passed, 'back':back})
 				if not created:
 					if 'REGULAR' in examination:
 					# Not updating grace and back if it is REAPPER or RECHECKING result
-						Score.objects.filter(student=student, subject=subject).update(total_marks=total, internal_marks=internal, external_marks=external, grace=grace, back=back)
+						Score.objects.filter(student=student, subject=subject).update(total_marks=total, internal_marks=internal, external_marks=external, grace=grace, back=back, passed=passed)
 					else:
-						Score.objects.filter(student=student, subject=subject).update(total_marks=total, internal_marks=internal, external_marks=external)
-		semester.credits = sem_credits
-		semester.save()
+						Score.objects.filter(student=student, subject=subject).update(total_marks=total, internal_marks=internal, external_marks=external, passed=passed)
+				
+				# Percentage Calculation Related Work
+				if passed:
+					obtained_credits += credits
+				normal_total += total
+				weighted_total += (total * credits)
+				total_subjects += 1
+			credits_percentage = weighted_total / sem_credits
+			normal_percentage = normal_total / total_subjects
+			swr, created = SemWiseResult.objects.get_or_create(student=student, semester=semester, defaults={'normal_total':normal_total, 'weighted_total':weighted_total, 'credits_obtained':obtained_credits, 'credits_percentage':credits_percentage, 'normal_percentage':normal_percentage})
+			if not created: # i.e. Result updation.
+				swr.update()
+			# SWR contains the cummulative result. Only the updated scores are reprinted. Not all the semester's subjects.
+			# Hence, need to iterate over all subjects of the semester. Doing that in update() method
+		
+		if 'REGULAR' in examination:
+			semester.credits = sem_credits
+			semester.save()
 	
 	def start_reading(self, check):
 		total = self.doc.numPages

@@ -136,8 +136,8 @@ class ResultsBotView(View):
 		reply = []
 		for subject in subjects:
 			score = student.scores.get(subject=subject, student=student)
-			name = subject.name or subject.paper_code
-			code = subject.paper_code
+			name = subject.name or subject.paper_id
+			code = subject.paper_id
 			credits = subject.credits
 			internal = score.internal_marks
 			external = score.external_marks

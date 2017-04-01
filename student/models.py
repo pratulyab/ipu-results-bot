@@ -1,8 +1,11 @@
+from django.core import validators
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
+from django.db.models.signals import m2m_changed, pre_save
+from django.dispatch import receiver
 
-from college.models import Batch, College, Stream
+from college.models import Batch, College, Stream, Semester
 import re
 
 # Create your models here.
@@ -22,6 +25,7 @@ class Student(models.Model):
 				blank = True
 			)
 	batch = models.ForeignKey(Batch, related_name="students")
+	semesters = models.ManyToManyField(Semester, through='SemWiseResult', related_name="students", blank=True)
 
 	def clean(self, *args, **kwargs):
 		super(Student, self).clean()
@@ -60,8 +64,65 @@ class Student(models.Model):
 		self.batch = batch
 		return super(Student, self).save(*args, **kwargs)
 
-	def full_name(self):
+	def _get_full_name(self):
 		return "%s %s" % (self.first_name.title(), self.last_name.title())
 
 	def __str__(self):
 		return "%s (%s %s)" % (self.enrollment, self.first_name, self.last_name)
+	full_name = property(_get_full_name)
+
+class SemWiseResult(models.Model):
+	student = models.ForeignKey(Student, related_name="sem_results")
+	semester = models.ForeignKey(Semester, related_name="results")
+	normal_total = models.PositiveSmallIntegerField(null=True, blank=True)
+	weighted_total = models.PositiveSmallIntegerField(null=True, blank=True)
+	credits_percentage = models.DecimalField(max_digits=4, decimal_places=2, validators=[validators.MinValueValidator(0), validators.MaxValueValidator(100)])
+	normal_percentage = models.DecimalField(max_digits=4, decimal_places=2, validators=[validators.MinValueValidator(0), validators.MaxValueValidator(100)])
+	credits_obtained = models.PositiveSmallIntegerField(null=True, blank=True)
+
+	def update(self):
+		''' Updates all fields by iterating over each subject of semester '''
+		# Assumes that all the relevant scores are created already
+		# Therefore, parse the pdfs in increasing order of sem number in order to create the sem result first before individual score updation
+		normal_total = 0
+		weighted_total = 0
+		credits_obtained = 0
+		subjects = self.semester.subjects.all()
+		for subject in subjects:
+			score = Score.objects.get(student=self.student, subject=subject)
+			normal_total += score.total_marks
+			weighted_total += (subject.credits * score.total_marks)
+			if score.passed:
+				credits_obtained += subject.credits
+		sem_credits = self.semester.credits
+		total_subjects = subjects.count()
+		if not sem_credits or not total_subjects:
+			# Finding same semester but of different batch
+			sem = self.semester
+			diff_batch_sems = Semester.objects.filter(number=sem.number, batch__college=sem.batch.college, batch__stream=sem.batch.stream).exclude(pk=sem.pk)
+			for sem in diff_batch_sems:
+				if sem.subjects.exists() and sem.credits:
+					sem_credits = sem.credits
+					total_subjects = sem.subjects.count()
+					break
+		self.normal_total = normal_total
+		self.weighted_total = weighted_total
+		self.credits_obtained = credits_obtained
+		self.credits_percentage = weighted_total / sem_credits
+		self.normal_percentage = normal_total / total_subjects
+		self.save()
+
+	def __str__(self):
+		return "%s [Sem %d]" % (self.student.enrollment, self.semester.number)
+
+	class Meta:
+		unique_together = ['student', 'semester']
+
+@receiver(pre_save, sender=SemWiseResult)
+def validate_semester_students(sender, instance, **kwargs):
+	student = instance.student
+	semester = instance.semester
+	if student.batch != semester.batch:
+		raise ValidationError("Student %s doesn't belong to batch %s." % (student.enrollment, semester.batch))
+
+from result.models import Score
