@@ -194,7 +194,7 @@ class ResultsBotView(View):
 							}]
 						},
 						{
-							"title": "%d out of %d" % (credits_obtained, total_credits) + '%',
+							"title": "%d out of %d" % (credits_obtained, total_credits),
 							"subtitle": "credits obtained",
 							"buttons": [
 							{
