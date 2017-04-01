@@ -116,7 +116,7 @@ class ResultsBotView(View):
 							{
 								"type": "postback",
 								"title": "Aggregate",
-								"payload": "%d_%s" % (student.pk, ','.join(str([s['pk']) for s in student.sem_results.values('pk')]))
+								"payload": "%d_%s" % (student.pk, ','.join([str(s['pk']) for s in student.sem_results.values('pk')]))
 							}
 						]
 					}
