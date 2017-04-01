@@ -79,6 +79,8 @@ class SemWiseResult(models.Model):
 	credits_percentage = models.DecimalField(max_digits=4, decimal_places=2, validators=[validators.MinValueValidator(0), validators.MaxValueValidator(100)])
 	normal_percentage = models.DecimalField(max_digits=4, decimal_places=2, validators=[validators.MinValueValidator(0), validators.MaxValueValidator(100)])
 	credits_obtained = models.PositiveSmallIntegerField(null=True, blank=True)
+	total_credits = models.PositiveSmallIntegerField(null=True, blank=True)
+	total_subjects = models.PositiveSmallIntegerField(null=True, blank=True)
 
 	def update(self):
 		''' Updates all fields by iterating over each subject of semester '''
@@ -110,6 +112,8 @@ class SemWiseResult(models.Model):
 		self.credits_obtained = credits_obtained
 		self.credits_percentage = weighted_total / sem_credits
 		self.normal_percentage = normal_total / total_subjects
+		self.total_credits = sem_credits
+		self.total_subjects = total_subjects
 		self.save()
 
 	def __str__(self):

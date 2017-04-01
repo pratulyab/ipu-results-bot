@@ -185,7 +185,13 @@ class PDFReader:
 				total_subjects += 1
 			credits_percentage = weighted_total / sem_credits
 			normal_percentage = normal_total / total_subjects
-			swr, created = SemWiseResult.objects.get_or_create(student=student, semester=semester, defaults={'normal_total':normal_total, 'weighted_total':weighted_total, 'credits_obtained':obtained_credits, 'credits_percentage':credits_percentage, 'normal_percentage':normal_percentage})
+			swr, created = SemWiseResult.objects.get_or_create(student=student, semester=semester,
+				defaults={
+					'normal_total':normal_total, 'weighted_total':weighted_total, 'credits_obtained':obtained_credits,
+					'credits_percentage':credits_percentage, 'normal_percentage':normal_percentage, 'total_credits':sem_credits,
+					'total_subjects':total_subjects
+				}
+			)
 			if not created: # i.e. Result updation.
 				swr.update()
 			# SWR contains the cummulative result. Only the updated scores are reprinted. Not all the semester's subjects.

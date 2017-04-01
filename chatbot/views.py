@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from college.models import Batch, College, Semester, Stream, Subject
 from result.models import Score
-from student.models import Student
+from student.models import Student, SemWiseResult
 
 from .utils import get_user_details, send_action, send_message, send_quickreplies, subscribe_app_to_page, whitelist_domain
 
@@ -30,8 +30,8 @@ class ResultsBotView(View):
 		return View.dispatch(self, request, *args, **kwargs)
 	
 	def send_semesters_qr(self, uid, student, token, *args, **kwargs):
-		semesters = student.batch.semesters.all().order_by('number')
-		if not semesters:
+		semesters = student.sem_results.values('semester__number').order_by('semester__number')
+		if not semesters.exists():
 			payload = {'recipient':{'id':uid}, 'message':{'text':'Sorry, I don\'t have any data for you'}}
 			send_message(payload)
 		else:
@@ -43,10 +43,11 @@ class ResultsBotView(View):
 			}
 			quick_replies = []
 			for semester in semesters:
+				number = semester['semester__number']
 				sem = {
 					"content_type":"text",
-					"title":"Sem %d" % semester.number,
-					"payload": "%s_%d" % (token, semester.number)
+					"title":"Sem %d" % number,
+					"payload": "%d_%d" % (student.pk, number)
 				}
 				quick_replies.append(sem)
 			payload['message']['quick_replies'] = quick_replies
@@ -97,7 +98,7 @@ class ResultsBotView(View):
 		payload = {'recipient':{'id':uid}, 'message':{'text': format_str1 + format_str2}}
 		send_message(payload)
 
-	def send_percentage_buttons(self, uid, student, semester, sem_subject_pks):
+	def send_percentage_buttons(self, uid, student, semester):
 		payload = {
 			"recipient" : {"id" : uid},
 			"message": {
@@ -110,12 +111,12 @@ class ResultsBotView(View):
 							{
 								"type": "postback",
 								"title": "For %d Semester" % (semester.number),
-								"payload": "%d_%d<%s" % (student.pk, semester.number, (','.join(sem_subject_pks)))
+								"payload": "%d_%s" % (student.pk, SemWiseResult.objects.get(semester=semester, student=student).pk)
 							},
 							{
 								"type": "postback",
 								"title": "Aggregate",
-								"payload": "%d_ALL<" % (student.pk)
+								"payload": "%d_%s" % (student.pk, ','.join([s['pk'] for s in student.sem_results.values('pk')]))
 							}
 						]
 					}
@@ -127,12 +128,11 @@ class ResultsBotView(View):
 	def handle_quickreply(self, uid, token):
 		# Send a semester's result
 		# Not using try, except because payload is generated for valid data only
-		enrollment, sem = token.split('_')
+		student_pk, sem = token.split('_')
 		sem = int(sem)
-		student = Student.objects.get(enrollment=enrollment)
-		semester = student.batch.semesters.get(number=sem)
+		student = Student.objects.get(pk=student_pk)
+		semester = student.sem_results.select_related('semester').get(semester__number=sem).semester
 		subjects = semester.subjects.all()
-		subject_pks = [str(subject.pk) for subject in subjects]
 		reply = []
 		for subject in subjects:
 			score = student.scores.get(subject=subject, student=student)
@@ -146,54 +146,23 @@ class ResultsBotView(View):
 		for msg in reply:
 			payload = {'recipient':{'id':uid}, 'message':{'text':msg}}
 			send_message(payload)
-		self.send_percentage_buttons(uid, student, semester, subject_pks)
+		self.send_percentage_buttons(uid, student, semester)
 
 	def handle_percentage_postback(self, uid, token):
 		student_pk, token = token.split('_')
-		sem, subjects = token.split('<')
-		sems_list = []
+		result_pks = token.split(',')
 		student = Student.objects.get(pk=student_pk)
-		credits_percentage = 0 # ALL(Credit*Marks)/(total credits * 100)
-		normal_percentage = 0 # (Sum of marks)/(total subjects * 100)
-		if sem == 'ALL':
-			total_credits = 0
-			weighted_marks = 0 # sum of Marks * Credit
-			normal_marks = 0 # sum of Marks * 1
-			total_subjects = 0
-			semesters = student.batch.semesters.order_by('number')
-			for semester in semesters:
-				sems_list.append(semester)
-				subjects = semester.subjects.all()
-				for subject in subjects:
-					score = student.scores.get(subject=subject)
-					credits = subject.credits
-					marks = score.total_marks
-					total_credits += credits
-					weighted_marks += credits*marks
-					normal_marks += marks
-					total_subjects += 1
-			credits_percentage = (weighted_marks/(total_credits * 100)) * 100
-			normal_percentage = (normal_marks/(total_subjects * 100)) * 100
-		else:
-			subjects = subjects.split(',')
-			total_credits = 0
-			weighted_marks = 0 # sum of Marks * Credit
-			normal_marks = 0 # sum of Marks * 1
-			total_subjects = 0
-			subjects = Subject.objects.filter(pk__in = subjects)
-			sems_list.append(Semester.objects.get(subjects__pk__in=[subjects[0].pk], batch__students__pk__in=[student.pk]))
-			for subject in subjects:
-				score = student.scores.get(subject=subject)
-				credits = subject.credits
-				marks = score.total_marks
-				total_credits += credits
-				weighted_marks += credits*marks
-				normal_marks += marks
-				total_subjects += 1
-			credits_percentage = (weighted_marks/(total_credits * 100)) * 100
-			normal_percentage = (normal_marks/(total_subjects * 100)) * 100
-		sems = [str(s.number) for s in sems_list]
-		sems_subtitle = "Sem: " + ("%s - %s" % (min(sems), max(sems)) if sem == 'ALL' and min(sems) != max(sems) else ','.join(sems))
+		results = SemWiseResult.objects.selected_related('semester').filter(pk__in=result_pks, student=student)
+		sem_list = [sem['semester__number'] for sem in results.values('semester__number')]
+		sem_subtitle = ("Sems: %d - %d" % (min(sem_list), max(sem_list))) if min(sem_list) != max(sem_list) else ("Semester: %d" % sem_list[0])
+		values = results.values('normal_total', 'weighted_total', 'credits_obtained', 'total_credits', 'total_subjects')
+		normal_total = sum(each['normal_total'] for each in values)
+		weighted_total = sum(each['weighted_total'] for each in values)
+		credits_obtained = sum(each['credits_obtained'] for each in values)
+		total_credits = sum(each['total_credits'] for each in values)
+		total_subjects = sum(each['total_subjects'] for each in values)
+		credits_percentage = weighted_total / total_credits
+		normal_percentage = normak_total / total_subjects
 
 		payload = {
 			"recipient" : {"id" : uid},
@@ -206,7 +175,7 @@ class ResultsBotView(View):
 						"elements": [
 						{
 							"title": student.enrollment,
-							"subtitle": sems_subtitle
+							"subtitle": sem_subtitle
 						},
 						{
 							"title": "%.2f" % credits_percentage + '%',
@@ -219,6 +188,14 @@ class ResultsBotView(View):
 						{
 							"title": "%.2f" % normal_percentage + '%',
 							"subtitle": "w/o credits",
+							"buttons": [
+							{
+								"type": "element_share"
+							}]
+						},
+						{
+							"title": "%d out of %d" % (credits_obtained, total_credits) + '%',
+							"subtitle": "credits obtained",
 							"buttons": [
 							{
 								"type": "element_share"
