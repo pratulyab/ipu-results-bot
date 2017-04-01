@@ -152,7 +152,7 @@ class ResultsBotView(View):
 		student_pk, token = token.split('_')
 		result_pks = token.split(',')
 		student = Student.objects.get(pk=student_pk)
-		results = SemWiseResult.objects.selecte_related('semester').filter(pk__in=result_pks, student=student)
+		results = SemWiseResult.objects.select_related('semester').filter(pk__in=result_pks, student=student)
 		sem_list = [sem['semester__number'] for sem in results.values('semester__number')]
 		sem_subtitle = ("Sems: %d - %d" % (min(sem_list), max(sem_list))) if min(sem_list) != max(sem_list) else ("Semester: %d" % sem_list[0])
 		values = results.values('normal_total', 'weighted_total', 'credits_obtained', 'total_credits', 'total_subjects')
