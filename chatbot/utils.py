@@ -16,10 +16,14 @@ def whitelist_domain(request):
 	r = requests.post(url, headers=headers, data=payload)
 	return HttpResponse(r.text)
 
-def get_user_details(uid, params=['first_name', 'last_name', 'profile_pic', 'gender']):
+def get_user_details(uid, params=['first_name', 'last_name', 'profile_pic', 'gender', 'locale', 'timezone']):
 #	payload = {'fields': ','.join(params), 'access_token': settings.PAGE_ACCESS_TOKEN}
 	url = "https://graph.facebook.com/v2.6/%s?fields=%s&access_token=%s" % (uid, ','.join(params), settings.PAGE_ACCESS_TOKEN, )
-	r = requests.get(url)
+	try:
+		r = requests.get(url)
+	except:
+		return {}
+	print("USER: ", r.text)
 	r = json.loads(r.text)
 	return r
 
