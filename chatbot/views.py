@@ -18,6 +18,7 @@ import json, re, requests
 class ResultsBotView(View):
 	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease send \'help\' to see how can I serve you.'
 	enrollment_pattern = r'(\d{3})(\d{3})(\d{3})(\d{2})'
+	help_text = 'Hey {{user_first_name}}!\nI\'m a Chatbot who is here to help you with your results related query. :)\n\nI am intended to serve you by providing the results of an 11-digits long enrollment number. :D\n\n Try sending me an enrollment number.'
 	
 	def get(self, request, *args, **kwargs):
 		if request.GET.get('hub.verify_token', None) == settings.VERIFY_TOKEN:
@@ -58,7 +59,7 @@ class ResultsBotView(View):
 		payload = {
 			"recipient":{"id": uid},
 			"message":{
-				"text": "What would you like to know?",
+				"text": "What can I help you with?",
 				"quick_replies": [
 				{
 					"content_type": "text",
@@ -108,8 +109,10 @@ class ResultsBotView(View):
 		if not student:
 			reply_404 = 'OOPS! No valid enrollment number provided.\n\nPlease type \'help\' for further instructions.'
 			if re.search(self.enrollment_pattern, ''.join(text)):
-				reply_404 = 'Sorry, I don\'t know results for this enrollment number. -.-\''
+				reply_404 = 'Sorry, I don\'t know results for this enrollment number. -.-\'\n\n Please visit the page to know which batches\' results do I know.\n\nTry sending me another one. :D'
 			payload = {'recipient':{'id':uid}, 'message':{'text':reply_404}}
+				if 'help' in ' '.join(text).lower():
+					payload['message']['text'] = self.help_text
 			send_message(payload)
 		else:
 			self.send_choices(uid, student)
@@ -157,13 +160,13 @@ class ResultsBotView(View):
 			self.send_semesters_qr(uid, student, token)
 		else:
 			# Sem Result
-			self.send_format(uid)
 			student_pk, token = token.split('+')
 			what, sem = token.split('_')
 			sem = int(sem)
 			student = Student.objects.get(pk=student_pk)
 			semester = student.sem_results.select_related('semester').get(semester__number=sem).semester
 			if what == 'SCORE':
+				self.send_format(uid)
 				subjects = semester.subjects.all()
 				reply = []
 				for subject in subjects:
