@@ -100,7 +100,7 @@ class ResultsBotView(View):
 		return student
 
 	def handle_text(self, uid, text):
-		text = text.split()
+		text = text.lower().split()
 		student = None
 		for token in text:
 			student = self.valid_enrollment(token)
