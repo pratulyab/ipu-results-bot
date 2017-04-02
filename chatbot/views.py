@@ -47,11 +47,33 @@ class ResultsBotView(View):
 				sem = {
 					"content_type":"text",
 					"title":"Sem %d" % number,
-					"payload": "%d_%d" % (student.pk, number)
+					"payload": token+"_%d" % number
 				}
 				quick_replies.append(sem)
 			payload['message']['quick_replies'] = quick_replies
 			send_quickreplies(payload)
+
+	def send_choices(self, uid, student):
+		''' Send quick reply to choose b/w percentage and result '''
+		payload = {
+			"recipient":{"id": uid},
+			"message":{
+				"text": "What would you like to know?",
+				"quick_replies": [
+				{
+					"content_type": "text",
+					"title": "Marks",
+					"payload": "%d=SCORE" % student.pk
+				},
+				{
+					"content_type": "text",
+					"title": "Percentage",
+					"payload": "%d=PERCENTAGE" % student.pk
+				},
+				]
+			}
+		}
+		send_quickreplies(payload)
 
 	def valid_enrollment(self, token):
 		try:
@@ -90,7 +112,7 @@ class ResultsBotView(View):
 			payload = {'recipient':{'id':uid}, 'message':{'text':reply_404}}
 			send_message(payload)
 		else:
-			self.send_semesters_qr(uid, student, token)
+			self.send_choices(uid, student)
 
 	def send_format(self, uid):
 		format_str1 = "Result will be displayed in following format:\n"
@@ -128,25 +150,35 @@ class ResultsBotView(View):
 	def handle_quickreply(self, uid, token):
 		# Send a semester's result
 		# Not using try, except because payload is generated for valid data only
-		student_pk, sem = token.split('_')
-		sem = int(sem)
-		student = Student.objects.get(pk=student_pk)
-		semester = student.sem_results.select_related('semester').get(semester__number=sem).semester
-		subjects = semester.subjects.all()
-		reply = []
-		for subject in subjects:
-			score = student.scores.get(subject=subject, student=student)
-			name = subject.name or subject.paper_id
-			paper_id = subject.paper_id
-			credits = subject.credits
-			internal = score.internal_marks
-			external = score.external_marks
-			total = score.total_marks
-			reply.append("%s - %s (%d)\n%d + %d = %d\n\n" % (name, paper_id, credits, internal, external, total))
-		for msg in reply:
-			payload = {'recipient':{'id':uid}, 'message':{'text':msg}}
-			send_message(payload)
-		self.send_percentage_buttons(uid, student, semester)
+		if '=' in token: # then choice has been made b/w percentage and score
+			student_pk, what = token.split('=')
+			student = Student.objects.get(pk=student_pk)
+			token = token.replace('=', '+')
+			self.send_semesters_qr(uid, student, token)
+		else:
+			student_pk, token = token.split('+')
+			what, sem = token.split('_')
+			sem = int(sem)
+			student = Student.objects.get(pk=student_pk)
+			semester = student.sem_results.select_related('semester').get(semester__number=sem).semester
+			if what == 'SCORE':
+				subjects = semester.subjects.all()
+				reply = []
+				for subject in subjects:
+					score = student.scores.get(subject=subject, student=student)
+					name = subject.name or subject.paper_id
+					paper_id = subject.paper_id
+					credits = subject.credits
+					internal = score.internal_marks
+					external = score.external_marks
+					total = score.total_marks
+					reply.append("%s - %s (%d)\n%d + %d = %d\n\n" % (name, paper_id, credits, internal, external, total))
+				for msg in reply:
+					payload = {'recipient':{'id':uid}, 'message':{'text':msg}}
+					send_message(payload)
+			else:
+				self.send_percentage_buttons(uid, student, semester)
+			self.send_choices(uid, student)
 
 	def handle_percentage_postback(self, uid, token):
 		student_pk, token = token.split('_')
