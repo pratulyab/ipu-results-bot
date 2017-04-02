@@ -156,6 +156,8 @@ class ResultsBotView(View):
 			token = token.replace('=', '+')
 			self.send_semesters_qr(uid, student, token)
 		else:
+			# Sem Result
+			self.send_format(uid)
 			student_pk, token = token.split('+')
 			what, sem = token.split('_')
 			sem = int(sem)
@@ -176,9 +178,9 @@ class ResultsBotView(View):
 				for msg in reply:
 					payload = {'recipient':{'id':uid}, 'message':{'text':msg}}
 					send_message(payload)
+				self.send_choices(uid, student)
 			else:
 				self.send_percentage_buttons(uid, student, semester)
-			self.send_choices(uid, student)
 
 	def handle_percentage_postback(self, uid, token):
 		student_pk, token = token.split('_')
@@ -186,7 +188,7 @@ class ResultsBotView(View):
 		student = Student.objects.get(pk=student_pk)
 		results = SemWiseResult.objects.select_related('semester').filter(pk__in=result_pks, student=student)
 		sem_list = [sem['semester__number'] for sem in results.values('semester__number')]
-		sem_subtitle = ("Sems: %d - %d" % (min(sem_list), max(sem_list))) if min(sem_list) != max(sem_list) else ("Semester: %d" % sem_list[0])
+		sem_subtitle = ("Sem(s): %d - %d" % (min(sem_list), max(sem_list))) if min(sem_list) != max(sem_list) else ("Semester: %d" % sem_list[0])
 		values = results.values('normal_total', 'weighted_total', 'credits_obtained', 'total_credits', 'total_subjects')
 		normal_total = sum(each['normal_total'] for each in values)
 		weighted_total = sum(each['weighted_total'] for each in values)
@@ -242,6 +244,7 @@ class ResultsBotView(View):
 			}
 		}
 		send_message(payload)
+		self.send_choices(uid, student)
 	
 	def post(self, request, *args, **kwargs):
 		response = json.loads(request.body.decode('utf-8'))
@@ -253,8 +256,6 @@ class ResultsBotView(View):
 				# Percentage
 					self.handle_percentage_postback(uid, message['postback']['payload'])
 				elif 'quick_reply' in message['message']:
-				# Sem Result
-					self.send_format(uid)
 					self.handle_quickreply(uid, message['message']['quick_reply']['payload'])
 				elif 'attachment' in message['message'] or 'attachments' in message['message']:
 					payload = {'recipient':{'id':uid}, 'message':{'text':self.standard_reply}}
