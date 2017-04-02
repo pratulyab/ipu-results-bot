@@ -111,10 +111,10 @@ class ResultsBotView(View):
 			if re.search(self.enrollment_pattern, ''.join(text)):
 				reply_404 = 'Sorry, I don\'t know results for this enrollment number. -.-\'\n\n Please visit the page to know which batches\' results do I know.\n\nTry sending me another one. :D'
 			payload = {'recipient':{'id':uid}, 'message':{'text':reply_404}}
-			if 'help' in ' '.join(text).lower():
+			if 'hey' in text or 'hi' in text or 'hello' in text or 'yo' in text or 'help' in text:
 				user_details = get_user_details(uid)
 				payload['message']['text'] = (self.help_text % (user_details['first_name'] if user_details else 'there'))
-			if 'thank' in ' '.join(text).lower():
+			elif 'thank' in ' '.join(text).lower():
 				payload['message']['text'] = "BOTs are here to serve you.. until singularity! 3:-)"
 			send_message(payload)
 		else:
