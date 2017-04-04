@@ -16,7 +16,7 @@ import json, re, requests
 # Create your views here.
 
 class ResultsBotView(View):
-	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease send \'help\' to see how can I serve you.'
+	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease send me an 11-digit enrollment number to get started with or send \'help\' to see how can I serve you .'
 	enrollment_pattern = r'(\d{3})(\d{3})(\d{3})(\d{2})'
 	help_text = 'Hey %s!\nI\'m a Chatbot who is here to help you with your results related query. :)\n\nI am intended to serve you by providing the results of an 11-digits long enrollment number. :D\n\n Try sending me an enrollment number.\n\n Please consider liking and sharing the page if you find my work helpful. :)'
 	
