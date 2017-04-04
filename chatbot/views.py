@@ -108,7 +108,7 @@ class ResultsBotView(View):
 			if student:
 				break
 		if not student:
-			reply_404 = 'OOPS!😅. \n\nPlease send me an 11-digit enrollment number to get started with or send \'help\'.'
+			reply_404 = 'OOPS! 😅 \n\nPlease send me an 11-digit enrollment number to get started with or send \'help\''
 			found_enrollment = re.search(self.enrollment_pattern, ''.join(text))
 			if found_enrollment:
 				enrollment_no = ''.join(found_enrollment.groups()[:])
