@@ -16,8 +16,8 @@ import json, re, requests
 # Create your views here.
 
 class ResultsBotView(View):
-	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease send me an 11-digit enrollment number to get started with or send \'help\' to see how can I serve you .'
-	enrollment_pattern = r'(\d{3})(\d{3})(\d{3})(\d{2})'
+	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease send \'help\' to see how can I serve you .'
+	enrollment_pattern = r'(\d{1,3})(\d{3})(\d{3})(\d{2})'
 	help_text = 'Hey %s!\nI\'m a Chatbot who is here to help you with your results related query. :)\n\nI am intended to serve you by providing the results of an 11-digits long enrollment number. :D\n\n Try sending me an enrollment number.\n\n Please consider liking and sharing the page if you find my work helpful. :)'
 	
 	def get(self, request, *args, **kwargs):
@@ -94,6 +94,7 @@ class ResultsBotView(View):
 		except Batch.DoesNotExist:
 			return None
 		try:
+		 	token = '0'*(11-len(token)) + token
 			student = Student.objects.get(enrollment=token)
 		except Student.DoesNotExist:
 			return None
@@ -107,9 +108,12 @@ class ResultsBotView(View):
 			if student:
 				break
 		if not student:
-			reply_404 = 'OOPS! No valid enrollment number provided.\n\nPlease send \'help\' for further instructions.'
-			if re.search(self.enrollment_pattern, ''.join(text)):
-				reply_404 = 'Sorry, I don\'t know results for this enrollment number. -.-\'\n\n Please visit the page to know which batches\' results do I know.\n\nTry sending me another one. :D'
+			reply_404 = 'OOPS!😅. \n\nPlease send me an 11-digit enrollment number to get started with or send \'help\'.'
+			found_enrollment = re.search(self.enrollment_pattern, ''.join(text))
+			if found_enrollment:
+				enrollment_no = ''.join(found_enrollment.groups()[:])
+				enrollment_no = '0'*(11 - len(enrollment_no) + enrollment_no
+				reply_404 = 'Sorry, I don\'t know results for the enrollment number %s. -.-\'\n\n Please visit the page to know which batches\' results do I know.\n\nTry sending me another one. :D' % (enrollment_no)
 			payload = {'recipient':{'id':uid}, 'message':{'text':reply_404}}
 			if 'hey' in text or 'hi' in text or 'hello' in text or 'yo' in text or 'help' in text:
 				user_details = get_user_details(uid)
