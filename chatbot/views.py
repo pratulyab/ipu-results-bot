@@ -259,9 +259,9 @@ class ResultsBotView(View):
 	def post(self, request, *args, **kwargs):
 		response = json.loads(request.body.decode('utf-8'))
 		for entry in response['entry']:
-			send_action(uid, "typing_on")
 			for message in entry['messaging']:
 				uid = message['sender']['id']
+				send_action(uid, "typing_on")
 				if 'postback' in message:
 				# Percentage
 					self.handle_percentage_postback(uid, message['postback']['payload'])
