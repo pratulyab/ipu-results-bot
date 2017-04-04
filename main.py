@@ -7,7 +7,7 @@ import tempfile
 
 from result.views import PDFReader as pdf
 
-check = {'batches': ['2014'], 'colleges': ['164']}
+check = {'batches': ['2014','2015'], 'colleges': ['164']}
 
 def parse(url):
 	print('Parsing ', url)
@@ -34,4 +34,8 @@ if __name__ == '__main__':
 	else:
 		while(1):
 			url = input('Enter URL to IPU Result PDF doc: ')
+			if url == 'year':
+				only_year = input('year')
+				check['batches'] = list(only_year)
+				continue
 			parse(url)

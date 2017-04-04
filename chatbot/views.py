@@ -113,7 +113,7 @@ class ResultsBotView(View):
 			if found_enrollment:
 				enrollment_no = ''.join(found_enrollment.groups()[:])
 				enrollment_no = '0'*(11 - len(enrollment_no)) + enrollment_no
-				reply_404 = 'Sorry, I don\'t know results for the enrollment number %s. -.-\'\n\n Please visit the page to know which batches\' results do I know.\n\nTry sending me another one. :D' % (enrollment_no)
+				reply_404 = 'Sorry, I don\'t know results for the enrollment number %s. -.-\'\n\nPlease visit the page to know which batches\' results do I know.\n\nTry sending me another one. :D' % (enrollment_no)
 			payload = {'recipient':{'id':uid}, 'message':{'text':reply_404}}
 			if 'hey' in text or 'hi' in text or 'hello' in text or 'yo' in text or 'help' in text:
 				user_details = get_user_details(uid)
