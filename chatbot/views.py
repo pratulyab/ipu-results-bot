@@ -18,6 +18,8 @@ import json, re, requests
 class ResultsBotView(View):
 	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease send \'help\' to see how can I serve you .'
 	enrollment_pattern = r'(\d{1,3})(\d{3})(\d{3})(\d{2})'
+	greetings_pattern = r'(h+e+ll+o+|y+o+|h+i+|h+e+y+)!*'
+	appreciation_pattern = r'(th[ae]nk.*|coo+l|w+o+w+|a+w+e+s+o+m+e+|n+a*i+c+e+)!*'
 	help_text = 'Hey %s!\nI\'m a Chatbot who is here to help you with your results related query. :)\n\nI am intended to serve you by providing the results of an 11-digits long enrollment number. :D\n\n Try sending me an enrollment number.\n\n Please consider liking and sharing the page if you find my work helpful. :)'
 	
 	def get(self, request, *args, **kwargs):
@@ -115,10 +117,11 @@ class ResultsBotView(View):
 				enrollment_no = '0'*(11 - len(enrollment_no)) + enrollment_no
 				reply_404 = 'Sorry, I don\'t know results for the enrollment number %s. -.-\'\n\nPlease visit the page to know which batches\' results do I know.\n\nTry sending me another one. :D' % (enrollment_no)
 			payload = {'recipient':{'id':uid}, 'message':{'text':reply_404}}
-			if 'hey' in text or 'hi' in text or 'hello' in text or 'yo' in text or 'help' in text:
+			text = ' '.join(text)
+			if re.match(greetings_pattern, text):
 				user_details = get_user_details(uid)
 				payload['message']['text'] = (self.help_text % (user_details['first_name'] if user_details else 'there'))
-			elif 'thank' in ' '.join(text).lower():
+			elif re.match(appreciation_pattern, text):
 				payload['message']['text'] = "BOTs are here to serve you.. until singularity! 3:-)"
 			send_message(payload)
 		else:
