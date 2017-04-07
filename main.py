@@ -29,6 +29,9 @@ if __name__ == '__main__':
 			exit(0)
 		link = f.readline()
 		while link:
+			if '.pdf' not in link:
+				link = f.readline()
+				continue
 			parse(link.replace('\n', ''))
 			link = f.readline()
 	else:

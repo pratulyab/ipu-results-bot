@@ -97,11 +97,16 @@ class PDFReader:
 		semester = Semester.objects.get_or_create(number=sem, batch=batch)[0]
 	
 	# Regex
-		student_wise_pattern = r'(\d{11}[a-zA-Z\s]+(?P<sub>\d{5,6}\(\d\)(\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)){3}\s*)+)'
+	#	student_wise_pattern = r'(\d{11}[a-zA-Z\s]+(?P<sub>\d{5,6}\(\d\)(\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)){3}\s*)+)'
+	# New regex because of new grading system in PDFs
+		student_wise_pattern = r'(\d{11}[a-zA-Z\s]+(?P<sub>\d{5,6}\(\d\)(\s*(\d{1,3}\s*(\([A-Z\+\-]+\))?\*?|A|\-|C|D|RL|AP)){3}\s*)+)'
 		student_pattern = r'(\d{11})([a-zA-Z\s]+)'
-		details_pattern = r'(\d{5,6})\s*\((\d)\)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)'
+	#	details_pattern = r'(\d{5,6})\s*\((\d)\)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)'
+		details_pattern = r'(\d{5,6})\s*\((\d)\)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)\s*(\d{1,3}\*?|A|\-|C|D|RL|AP)\s*(\d{1,3}\s*(\([A-Z\+\-]+\))?\*?|A|\-|C|D|RL|AP)'
 		
 		student_wise_details = re.findall(student_wise_pattern, text)
+		if not student_wise_details:
+			print(batch, 'no details', text, student_wise_pattern)
 		sem_credits = 0
 		
 	# Creating entries for students and their results
@@ -135,8 +140,11 @@ class PDFReader:
 			student = Student.objects.get_or_create(enrollment=enrollment, defaults={'first_name':name[0], 'last_name':' '.join(name[1:]), 'batch':batch})[0]
 			details = re.findall(details_pattern, each)
 			for every in details:
-				paper_id, credits, internal, external, total = every
+				paper_id, credits, internal, external, total, grade = every
 				grace = False
+				total = re.sub(r'\([A-Z\+\-]+\)', '', total).strip() # Replacing grade with NULL
+				if grade and i == 0:
+					print(grade, batch)
 				if '*' in total:
 					total = total.replace('*', '')
 					grace = True
@@ -144,7 +152,8 @@ class PDFReader:
 				internal = 0 if not internal.isnumeric() else int(internal) # Because of A, M marked (Absent, Medical)
 				external = 0 if not external.isnumeric() else int(external)
 				total = 0 if not total.isnumeric() else int(total)
-				passed =  total >= 50
+				passing_marks = 50 if not grade else 40
+				passed =  total >= passing_marks
 				back = not passed
 				if i == 0:
 					sem_credits += credits
