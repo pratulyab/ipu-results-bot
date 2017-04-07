@@ -18,7 +18,7 @@ import json, re, requests
 class ResultsBotView(View):
 	standard_reply = 'Oops. I don\'t know how to handle that.\nPlease send \'help\' to see how can I serve you .'
 	enrollment_pattern = r'(\d{1,3})(\d{3})(\d{3})(\d{2})'
-	greetings_pattern = r'(h+e+ll+o+|y+o+|h+i+|h+e+y+)!*'
+	greetings_pattern = r'(h+e+ll+o+|y+o+|h+i+|h+e+y+|s+u+p+)!*?*'
 	appreciation_pattern = r'(th[ae]nk.*|coo+l|w+o+w+|a+w+e+s+o+m+e+|n+a*i+c+e+)!*'
 	help_text = 'Hey %s!\nI\'m a Chatbot who is here to help you with your results related query. :)\n\nI am intended to serve you by providing the results of an 11-digits long enrollment number. :D\n\n Try sending me an enrollment number.\n\n Please consider liking and sharing the page if you find my work helpful. :)'
 	
