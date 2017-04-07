@@ -59,7 +59,7 @@ class ResultsBotView(View):
 		payload = {
 			"recipient":{"id": uid},
 			"message":{
-				"text": "What can I help you with?",
+				"text": "What can I help you with?\nChoose: ",
 				"quick_replies": [
 				{
 					"content_type": "text",
