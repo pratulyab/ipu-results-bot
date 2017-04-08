@@ -118,7 +118,7 @@ class ResultsBotView(View):
 				reply_404 = 'Sorry, I don\'t know results for the enrollment number %s. -.-\'\n\nPlease visit the page to know which batches\' results do I know.\n\nTry sending me another one. :D' % (enrollment_no)
 			payload = {'recipient':{'id':uid}, 'message':{'text':reply_404}}
 			text = ' '.join(text)
-			if re.match(self.greetings_pattern, text):
+			if re.match(self.greetings_pattern, text) or 'help' in text:
 				user_details = get_user_details(uid)
 				payload['message']['text'] = (self.help_text % (user_details['first_name'] if user_details else 'there'))
 			elif re.match(self.appreciation_pattern, text):
