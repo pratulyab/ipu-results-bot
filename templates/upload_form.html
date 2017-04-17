@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Upload Result</title>
+	</head>
+	<body>
+		<form method="POST">
+			{% csrf_token %}
+			<label for="url">Enter URL</label>
+			<input id="url" type="text" placeholder="URL of pdf" name="url">
+			<div>
+				<button>Submit</button>
+			</div>
+			{% if method == "POST" %}
+				{% if success %}
+					<h2 style="color: green">Success!</h2>
+				{% else %}
+					<h2 style="color: red">Error Occurred</h2><br><br>
+					<h4>{{ error }}</h4>
+				{% endif %}
+			{% endif %}
+		</form>
+	</body>
+</html>

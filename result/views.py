@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
 
 from college.models import Batch, College, Semester, Stream, Subject
 from student.models import Student, SemWiseResult
@@ -221,3 +222,22 @@ class PDFReader:
 				table = page_to_tables(get_pdf_page(self.f, num+1))
 				self.subjects = self.handle_heading_page(text, table)
 			# Subjects Extracted from scheme page. Therefore, subsequent pages  will be having results of these subjects, until next scheme
+
+# Upload new result
+@require_http_methods(['GET', 'POST'])
+def upload(request):
+	if request.method == 'GET':
+		return render(request, 'upload_form.html', {'method': 'GET'})
+	else:
+		url = request.POST.get('url', None)
+		verdict = False
+		error = ''
+		if url:
+			from main import parse
+			try:
+				parse(url)
+				verdict = True
+			except Exception as e:
+				error = e.__str__()
+				pass
+		return render(request, 'upload_form.html', {'success': verdict, 'method': 'POST', 'error': error})

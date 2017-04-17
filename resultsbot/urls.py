@@ -18,10 +18,12 @@ from django.contrib import admin
 
 from chatbot.views import ResultsBotView
 from chatbot.utils import subscribe_app_to_page, whitelist_domain
+from result.views import upload
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
 	url(r'^subscribe/?$', subscribe_app_to_page),
 	url(r'^whitelist/?$', whitelist_domain),
+	url(r'^dumpload/?$', upload),
 	url(r'^/?$', ResultsBotView.as_view()),
 ]
