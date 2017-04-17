@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.http import Http404
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
@@ -227,6 +229,8 @@ class PDFReader:
 @require_http_methods(['GET', 'POST'])
 def upload(request):
 	if request.method == 'GET':
+		if request.GET.get('token', '') != settings.VERIFY_TOKEN:
+			raise Http404('')
 		return render(request, 'upload_form.html', {'method': 'GET'})
 	else:
 		url = request.POST.get('url', None)
