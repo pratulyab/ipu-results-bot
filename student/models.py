@@ -91,7 +91,11 @@ class SemWiseResult(models.Model):
 		credits_obtained = 0
 		subjects = self.semester.subjects.all()
 		for subject in subjects:
+			#			try:
 			score = Score.objects.get(student=self.student, subject=subject)
+			#			except:
+			#				print(self.student, subject)
+			#				continue
 			normal_total += score.total_marks
 			weighted_total += (subject.credits * score.total_marks)
 			if score.passed:
