@@ -7,7 +7,7 @@ import tempfile
 
 from result.views import PDFReader as pdf
 
-check = {'batches': ['2014','2015'], 'colleges': ['164']}
+check = {'batches': ['2014','2015','2016'], 'colleges': ['164']}
 
 def parse(url):
 	print('Parsing ', url)
