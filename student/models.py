@@ -118,7 +118,11 @@ class SemWiseResult(models.Model):
 		self.normal_percentage = normal_total / total_subjects
 		self.total_credits = sem_credits
 		self.total_subjects = total_subjects
-		self.save()
+		try:
+			self.save()
+		except:
+			print(self.student, self.semester, self)
+			pass
 
 	def __str__(self):
 		return "%s [Sem %d]" % (self.student.enrollment, self.semester.number)
