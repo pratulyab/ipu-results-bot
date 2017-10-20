@@ -126,12 +126,13 @@ class ResultsBotView(View):
 			send_message(payload)
 		else:
 			self.send_choices(uid, student)
-
+	'''
 	def send_format(self, uid):
 		format_str1 = "Result will be displayed in following format:\n"
 		format_str2 = "Subject Name - Paper ID (Credits)\nInternal Marks + External Marks = Total Marks\n\n"
 		payload = {'recipient':{'id':uid}, 'message':{'text': format_str1 + format_str2}}
 		send_message(payload)
+	'''
 
 	def send_percentage_buttons(self, uid, student, semester):
 		payload = {
@@ -176,9 +177,11 @@ class ResultsBotView(View):
 			student = Student.objects.get(pk=student_pk)
 			semester = student.sem_results.select_related('semester').get(semester__number=sem).semester
 			if what == 'SCORE':
-				self.send_format(uid)
+#				self.send_format(uid)
 				subjects = semester.subjects.all()
-				reply = []
+#				format_str1 = "Result is displayed in following format:\n"
+				format_str2 = "Subject Name - Paper ID (Credits)\nInternal Marks + External Marks = Total Marks"
+				reply = [format_str2] #[format_str1 + format_str2]
 				for subject in subjects:
 					score = student.scores.get(subject=subject, student=student)
 					name = subject.name or subject.paper_id
@@ -187,10 +190,11 @@ class ResultsBotView(View):
 					internal = score.internal_marks
 					external = score.external_marks
 					total = score.total_marks
-					reply.append("%s - %s (%d)\n%d + %d = %d\n\n" % (name, paper_id, credits, internal, external, total))
-				for msg in reply:
-					payload = {'recipient':{'id':uid}, 'message':{'text':msg}}
-					send_message(payload)
+					reply.append("%s - %s (%d)\n%d + %d = %d" % (name, paper_id, credits, internal, external, total))
+#				for msg in reply:
+				reply = '\n\n'.join(reply)
+				payload = {'recipient':{'id':uid}, 'message':{'text':reply}}
+				send_message(payload)
 				self.send_choices(uid, student)
 			else:
 				self.send_percentage_buttons(uid, student, semester)
@@ -276,4 +280,4 @@ class ResultsBotView(View):
 				else:
 					text = message['message']['text']
 					self.handle_text(uid, text)
-		return HttpResponse('OK')
+		return HttpResponse()
