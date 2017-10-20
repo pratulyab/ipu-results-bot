@@ -11,7 +11,7 @@ from student.models import Student, SemWiseResult
 
 from .utils import get_user_details, send_action, send_message, send_quickreplies, subscribe_app_to_page, whitelist_domain
 
-import json, re, requests, time
+import json, re, requests
 
 # Create your views here.
 
@@ -179,8 +179,12 @@ class ResultsBotView(View):
 			if what == 'SCORE':
 #				self.send_format(uid)
 				subjects = semester.subjects.all()
-				format_str = "Subject Name - Paper ID (Credits)\nInternal Marks + External Marks = Total Marks"
+
+				format_str = "Subject Name - Paper ID (Credits)\nInternal Marks + External Marks = Total Marks\n\n"
+				replies = []
 				reply = [format_str]
+				char_count = len(format_str)
+
 				for subject in subjects:
 					score = student.scores.get(subject=subject, student=student)
 					name = subject.name or subject.paper_id
@@ -189,12 +193,22 @@ class ResultsBotView(View):
 					internal = score.internal_marks
 					external = score.external_marks
 					total = score.total_marks
-					reply.append("%s - %s (%d)\n%d + %d = %d" % (name, paper_id, credits, internal, external, total))
-#				for msg in reply:
-				reply = '\n\n'.join(reply)
-				payload = {'recipient':{'id':uid}, 'message':{'text':reply}}
-				send_message(payload)
-				time.sleep(0.75)
+					text = "%s - %s (%d)\n%d + %d = %d\n\n" % (name, paper_id, credits, internal, external, total)
+					if char_count + len(text) > settings.TEXT_MESSAGE_CHAR_LIMIT:
+						replies.append(reply)
+						reply = [text]
+						char_count = len(text)
+					else:
+						reply.append(text)
+						char_count += len(text)
+
+				replies.append(reply)
+				
+				for msg in replies:
+					msg = ''.join(msg)
+					payload = {'recipient':{'id':uid}, 'message':{'text':msg}}
+					send_message(payload)
+				
 				self.send_choices(uid, student)
 			else:
 				self.send_percentage_buttons(uid, student, semester)
