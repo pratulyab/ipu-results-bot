@@ -30,7 +30,7 @@ def get_user_details(uid, params=['first_name', 'last_name', 'profile_pic', 'gen
 def send_message(payload):
 	headers = {'Content-Type': 'application/json'}
 	url = "https://graph.facebook.com/v2.6/me/messages?access_token=%s" % (settings.PAGE_ACCESS_TOKEN, )
-	send_action(payload['recipient']['id'], "typing_off")
+#	send_action(payload['recipient']['id'], "typing_off")
 	payload = json.dumps(payload)
 	r = requests.post(url, headers=headers, data=payload)
 	if 'error' in r:
