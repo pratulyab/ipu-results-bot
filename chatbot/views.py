@@ -188,11 +188,9 @@ class ResultsBotView(View):
 					external = score.external_marks
 					total = score.total_marks
 					reply.append("%s - %s (%d)\n%d + %d = %d\n\n" % (name, paper_id, credits, internal, external, total))
-				print('Replying', str(len(reply)))
 				for msg in reply:
 					payload = {'recipient':{'id':uid}, 'message':{'text':msg}}
 					send_message(payload)
-				print('Finished..')
 				self.send_choices(uid, student)
 			else:
 				self.send_percentage_buttons(uid, student, semester)
@@ -263,10 +261,7 @@ class ResultsBotView(View):
 	
 	def post(self, request, *args, **kwargs):
 		response = json.loads(request.body.decode('utf-8'))
-		print(response)
-		print('--'*10)
 		for entry in response['entry']:
-			print(entry)
 			for message in entry['messaging']:
 				uid = message['sender']['id']
 				send_action(uid, "typing_on")
@@ -281,4 +276,4 @@ class ResultsBotView(View):
 				else:
 					text = message['message']['text']
 					self.handle_text(uid, text)
-		return HttpResponse()
+		return HttpResponse('OK')
