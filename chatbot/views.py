@@ -193,6 +193,7 @@ class ResultsBotView(View):
 					reply.append("%s - %s (%d)\n%d + %d = %d" % (name, paper_id, credits, internal, external, total))
 #				for msg in reply:
 				reply = '\n\n'.join(reply)
+				print(reply)
 				payload = {'recipient':{'id':uid}, 'message':{'text':reply}}
 				send_message(payload)
 				self.send_choices(uid, student)

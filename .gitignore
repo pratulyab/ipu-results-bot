@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
 
 # Don't do the following because heroku cli doesn't have GIT repo.. So, file created there will be removed.
 # Update db here and push
