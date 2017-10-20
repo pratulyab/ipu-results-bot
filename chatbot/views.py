@@ -262,6 +262,7 @@ class ResultsBotView(View):
 	def post(self, request, *args, **kwargs):
 		response = json.loads(request.body.decode('utf-8'))
 		for entry in response['entry']:
+			print(entry)
 			for message in entry['messaging']:
 				uid = message['sender']['id']
 				send_action(uid, "typing_on")
