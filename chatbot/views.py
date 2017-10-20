@@ -11,7 +11,7 @@ from student.models import Student, SemWiseResult
 
 from .utils import get_user_details, send_action, send_message, send_quickreplies, subscribe_app_to_page, whitelist_domain
 
-import json, re, requests
+import json, re, requests, time
 
 # Create your views here.
 
@@ -179,9 +179,8 @@ class ResultsBotView(View):
 			if what == 'SCORE':
 #				self.send_format(uid)
 				subjects = semester.subjects.all()
-#				format_str1 = "Result is displayed in following format:\n"
-				format_str2 = "Subject Name - Paper ID (Credits)\nInternal Marks + External Marks = Total Marks"
-				reply = [format_str2] #[format_str1 + format_str2]
+				format_str = "Subject Name - Paper ID (Credits)\nInternal Marks + External Marks = Total Marks"
+				reply = [format_str]
 				for subject in subjects:
 					score = student.scores.get(subject=subject, student=student)
 					name = subject.name or subject.paper_id
@@ -193,9 +192,9 @@ class ResultsBotView(View):
 					reply.append("%s - %s (%d)\n%d + %d = %d" % (name, paper_id, credits, internal, external, total))
 #				for msg in reply:
 				reply = '\n\n'.join(reply)
-#				print(reply)
 				payload = {'recipient':{'id':uid}, 'message':{'text':reply}}
 				send_message(payload)
+				time.sleep(0.75)
 				self.send_choices(uid, student)
 			else:
 				self.send_percentage_buttons(uid, student, semester)
