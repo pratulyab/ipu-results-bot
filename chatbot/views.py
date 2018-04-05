@@ -283,15 +283,18 @@ class ResultsBotView(View):
 			for message in entry['messaging']:
 				uid = message['sender']['id']
 #				send_action(uid, "typing_on")
-				if 'postback' in message:
-				# Percentage
-					self.handle_percentage_postback(uid, message['postback']['payload'])
-				elif 'quick_reply' in message['message']:
-					self.handle_quickreply(uid, message['message']['quick_reply']['payload'])
-				elif 'attachment' in message['message'] or 'attachments' in message['message']:
-					payload = {'recipient':{'id':uid}, 'message':{'text':self.standard_reply}}
-					send_message(payload)
-				else:
-					text = message['message']['text']
-					self.handle_text(uid, text)
+				try:
+					if 'postback' in message:
+					# Percentage
+						self.handle_percentage_postback(uid, message['postback']['payload'])
+					elif 'quick_reply' in message['message']:
+						self.handle_quickreply(uid, message['message']['quick_reply']['payload'])
+					elif 'attachment' in message['message'] or 'attachments' in message['message']:
+						payload = {'recipient':{'id':uid}, 'message':{'text':self.standard_reply}}
+						send_message(payload)
+					else:
+						text = message['message']['text']
+						self.handle_text(uid, text)
+				except Exception as e:
+					print("***" + str(e))
 		return HttpResponse()
