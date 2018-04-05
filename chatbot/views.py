@@ -172,14 +172,10 @@ class ResultsBotView(View):
 		else:
 			# Sem Result
 			student_pk, token = token.split('+')
-			print('=-=-=-=-=', token)
 			what, sem = token.split('_')
 			sem = int(sem)
-			print(sem)
 			student = Student.objects.get(pk=student_pk)
-			print(student)
 			semester = student.sem_results.select_related('semester').get(semester__number=sem).semester
-			print(semester)
 			if what == 'SCORE':
 #				self.send_format(uid)
 				subjects = semester.subjects.all()
@@ -190,7 +186,10 @@ class ResultsBotView(View):
 				char_count = len(format_str)
 
 				for subject in subjects:
-					score = student.scores.get(subject=subject, student=student)
+					try:
+						score = student.scores.get(subject=subject, student=student)
+					except Score.DoesNotExist: # Maybe an elective that the student doesn't have
+						continue
 					name = subject.name or subject.paper_id
 					paper_id = subject.paper_id
 					credits = subject.credits
