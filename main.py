@@ -7,7 +7,7 @@ import tempfile
 
 from result.views import PDFReader as pdf
 
-check = {'batches': ['2014','2015','2016'], 'colleges': ['164']}
+check = {'batches': ['2014','2015','2016','2017'], 'colleges': ['164']}
 
 def parse(url):
 	print('Parsing ', url)
@@ -15,8 +15,8 @@ def parse(url):
 	try:
 		r = requests.get(url)
 		f.write(r.content)
+		f.close() # Closing because opened in 'w' mode
 		pdf(f.name, check=check)
-		f.close()
 	finally:
 		os.remove(f.name)
 
