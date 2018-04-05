@@ -172,6 +172,7 @@ class ResultsBotView(View):
 		else:
 			# Sem Result
 			student_pk, token = token.split('+')
+			print('=-=-=-=-=', token)
 			what, sem = token.split('_')
 			sem = int(sem)
 			student = Student.objects.get(pk=student_pk)
