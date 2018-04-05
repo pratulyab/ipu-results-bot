@@ -175,8 +175,11 @@ class ResultsBotView(View):
 			print('=-=-=-=-=', token)
 			what, sem = token.split('_')
 			sem = int(sem)
+			print(sem)
 			student = Student.objects.get(pk=student_pk)
+			print(student)
 			semester = student.sem_results.select_related('semester').get(semester__number=sem).semester
+			print(semester)
 			if what == 'SCORE':
 #				self.send_format(uid)
 				subjects = semester.subjects.all()
