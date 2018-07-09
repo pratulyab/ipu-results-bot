@@ -195,8 +195,16 @@ class PDFReader:
 				normal_total += total
 				weighted_total += (total * credits)
 				total_subjects += 1
-			credits_percentage = weighted_total / sem_credits
+			credits_percentage = weighted_total / sem_credits # FIXME: When result is updated for students, then sem_credits is calculated again (for the entries corresponding to their reappear scores). Hence, the new sem_credits corresponds only for some of the exams since a student doesn't get back in all the subjects of the semester. Therefore, don't recalculate the sem_credits again. Calculate (increment) only if REGULAR
+			# FIXME: The credits for REAPPEAR are being calculated wrongly. You only calculate credits for first row in table. However, the number of subjects and the credits vary with each row. Hence, you need to calculate all of this data in the upper loop only.
+			# Don't assume anything. Repeat everything for every student.
 			normal_percentage = normal_total / total_subjects
+			d = {'normal_total':normal_total, 'weighted_total':weighted_total, 'credits_obtained':obtained_credits,
+					'credits_percentage':credits_percentage, 'normal_percentage':normal_percentage, 'total_credits':sem_credits,
+					'total_subjects':total_subjects}
+			print(d)
+			print(student, semester)
+
 			swr, created = SemWiseResult.objects.get_or_create(student=student, semester=semester,
 				defaults={
 					'normal_total':normal_total, 'weighted_total':weighted_total, 'credits_obtained':obtained_credits,
