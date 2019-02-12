@@ -120,7 +120,7 @@ class ResultsBotView(View):
 			text = ' '.join(text)
 			if re.match(self.greetings_pattern, text) or 'help' in text:
 				user_details = get_user_details(uid)
-				payload['message']['text'] = (self.help_text % (user_details['first_name'] if user_details else 'there'))
+				payload['message']['text'] = (self.help_text % (user_details['first_name'] if (user_details and user_details.get('first_name')) else 'there'))
 			elif re.match(self.appreciation_pattern, text):
 				payload['message']['text'] = "BOTs are here to serve you.. until singularity! 3:-)"
 			send_message(payload)
