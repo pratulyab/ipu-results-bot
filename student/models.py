@@ -67,6 +67,17 @@ class Student(models.Model):
 	def _get_full_name(self):
 		return "%s %s" % (self.first_name.title(), self.last_name.title())
 
+	def aggregate(self, weighted=True):
+		sems = self.sem_results.all()
+		if weighted:
+			marks = sum([s['weighted_total'] for s in sems.values('weighted_total')])
+			denominator = sum([s['total_credits'] for s in sems.values('total_credits')]) or 1
+		else:
+			marks = sum([s['normal_total'] for s in sems.values('normal_total')])
+			denominator = sum([s['total_subjects'] for s in sems.values('total_subjects')]) or 1
+		return marks/denominator
+
+
 	def __str__(self):
 		return "%s (%s %s)" % (self.enrollment, self.first_name, self.last_name)
 	full_name = property(_get_full_name)
